@@ -7,15 +7,15 @@
 
 import Foundation
 
-struct AppResponse<T> {
-    let statusCode: Int
-    let payload: T?
+public struct AppResponse<T> {
+    public    let statusCode: Int
+    public let payload: T?
     
-    var success: Bool {
+    public var success: Bool {
         return 200...299 ~= statusCode
     }
     
-    init(statusCode: Int, payload: T?) {
+    public init(statusCode: Int, payload: T?) {
         self.statusCode = statusCode
         self.payload = payload
     }

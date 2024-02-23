@@ -6,7 +6,7 @@
 //
 import Foundation
 
-enum HTTPError: Error {
+public enum HTTPError: Error {
     case requestFailed
     case invalidResponse
     case dataConversionFailed
@@ -49,7 +49,7 @@ protocol IHttpConnect {
     ) async throws ->  AppResponse<T>
 }
 
-protocol Intercepter{
+public protocol Intercepter{
     
     func onRequest(req: URLRequest)->(URLRequest, Data?)
     
@@ -58,46 +58,47 @@ protocol Intercepter{
 }
 
 
-class DefaultHttpConnect : IHttpConnect {
-    var intersepters: [Intercepter] = []
+public class DefaultHttpConnect : IHttpConnect {
+    
+    public var intersepters: [Intercepter] = []
     
     
     let baseURL: URL
     let session: URLSession
     
-    init(baseURL: URL) {
+    public init(baseURL: URL) {
         self.baseURL = baseURL
         self.session = URLSession(configuration: .default)
     }
     
     
     //protocall metods
-    func get< T: Codable>(_ url: String, headers: [String : String]?, query: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+    public func get< T: Codable>(_ url: String, headers: [String : String]?, query: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try buildUrl(url, query: query, body: nil, headers: headers)
         request.httpMethod = "GET"
         return try await sendRequest(url: request)
     }
     
-    func post< T: Codable>(_ url: String, body: Data?, headers: [String : String]?, query: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+    public func post< T: Codable>(_ url: String, body: Data?, headers: [String : String]?, query: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         
         var request = try buildUrl(url, query: query, body: body, headers: headers)
         request.httpMethod = "POST"
         return try await sendRequest(url: request)
     }
     
-    func put< T: Codable>(_ url: String, body: Data?, headers: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+    public func put< T: Codable>(_ url: String, body: Data?, headers: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try buildUrl(url, query: nil, body: body, headers: headers)
         request.httpMethod = "PUT"
         return try await sendRequest(url: request)
     }
     
-    func patch< T: Codable>(_ url: String, body: Data?, headers: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+    public func patch< T: Codable>(_ url: String, body: Data?, headers: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try buildUrl(url, query: nil, body: body, headers: headers)
         request.httpMethod = "PATCH"
         return try await sendRequest(url: request)
     }
     
-    func delete< T: Codable>(_ url: String, headers: [String : String]?, query: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+    public func delete< T: Codable>(_ url: String, headers: [String : String]?, query: [String : String]?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try buildUrl(url, query: query, body: nil, headers: headers)
         request.httpMethod = "DELETE"
         return try await sendRequest(url: request)
@@ -183,7 +184,6 @@ class DefaultHttpConnect : IHttpConnect {
                 let responseData = try JSONDecoder().decode(R.self, from: data)
                 
                 //MARK: cahce response 298
-                
                 return AppResponse(statusCode: 298 , payload: responseData);
             }
             
@@ -203,22 +203,35 @@ class DefaultHttpConnect : IHttpConnect {
             }
             
             
-            let responseData = try JSONDecoder().decode(R.self, from: resData)
+            if let type = response?.allHeaderFields["Content-Type"]{
+                print(type)
+            }
             
+            
+            
+            if R.self == Data.self{
+                return AppResponse(statusCode:  response?.statusCode ?? 299 , payload: resData as? R);
+            }
+            
+            if R.self == String.self{
+                return AppResponse(statusCode:  response?.statusCode ?? 299 , payload: String(data: resData, encoding: .utf8) as? R);
+            }
+            
+            let responseData = try JSONDecoder().decode(R.self, from: resData)
             
             return AppResponse(statusCode:  response?.statusCode ?? 299 , payload: responseData);
         }catch let error as DecodingError {
             switch error {
-                case .dataCorrupted(let context):
-                    debugPrint("Data corrupted: \(context.debugDescription)")
-                case .keyNotFound(let key, let context):
-                    debugPrint("Key '\(key)' not found: \(context.debugDescription)")
-                case .typeMismatch(let type, let context):
-                    debugPrint("Type mismatch for type '\(type)'", context.debugDescription)
-                case .valueNotFound(let type, let context):
-                    debugPrint("Value not found for type '\(type)'", context.debugDescription)
-                @unknown default:
-                    debugPrint("Unknown decoding error \(error.errorDescription ?? "" )")
+            case .dataCorrupted(let context):
+                debugPrint("Data corrupted: \(context.debugDescription)")
+            case .keyNotFound(let key, let context):
+                debugPrint("Key '\(key)' not found: \(context.debugDescription)")
+            case .typeMismatch(let type, let context):
+                debugPrint("Type mismatch for type '\(type)'", context.debugDescription)
+            case .valueNotFound(let type, let context):
+                debugPrint("Value not found for type '\(type)'", context.debugDescription)
+            @unknown default:
+                debugPrint("Unknown decoding error \(error.errorDescription ?? "" )")
             }
             throw error
         } catch {
