@@ -26,7 +26,7 @@ swift package add EasyConnect
 
 ### Importing the Package
 
-``` code
+``` swift
 import EasyConnect
     
 ```
@@ -37,7 +37,7 @@ import EasyConnect
 
 Establish a base URL for your API or server:
 
-``` code
+``` swift
 let baseURL = URL(string: "https://your-api-endpoint.com")!
     
 ```
@@ -46,7 +46,7 @@ let baseURL = URL(string: "https://your-api-endpoint.com")!
 
 Create an \`ExHttpConnect\` instance with the base URL:
 
-``` code
+``` swift
 let client = ExHttpConnect(baseURL: baseURL)
     
 ```
@@ -58,7 +58,7 @@ send requests:
 
 ##### Example (POST request with multipart data):
 
-``` code
+``` swift
 func uploadFiles(files: [URL]) async throws {
     let dto = MultipartDTO(files: files)
     let response: AppResponse = try await client.post(
@@ -79,7 +79,7 @@ func uploadFiles(files: [URL]) async throws {
 
 Create a \`MultipartDTO\` instance to represent the multipart data:
 
-``` code
+``` swift
 struct MyDTO: MultipartDTO {
     var boundary: String = FormData.generateBoundary()
     let files: [URL]
@@ -94,7 +94,7 @@ Provide the \`files\` array containing the URLs of the files to upload.
 Wrap your request code in a \`try-catch\` block to handle potential
 errors:
 
-``` code
+``` swift
 do {
     try await uploadFiles(files: [path1, path2, path3])
 } catch {
