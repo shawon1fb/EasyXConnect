@@ -20,32 +20,37 @@ protocol IHttpConnect {
     func get<T: Codable>(
         _ url: String,
         headers: [String: String]?,
-        query: [String: String]?
+        query: [String: String]?,
+        cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     
     func post<T: Codable>(
         _ url: String,
         body: Data?,
         headers: [String: String]?,
-        query: [String: String]?
+        query: [String: String]?,
+        cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     
     func put<T: Codable>(
         _ url: String,
         body: Data?,
-        headers: [String: String]?
+        headers: [String: String]?,
+        cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     
     func patch<T: Codable>(
         _ url: String,
         body: Data?,
-        headers: [String: String]?
+        headers: [String: String]?,
+        cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     
     func delete<T: Codable>(
         _ url: String,
         headers: [String: String]?,
-        query: [String: String]?
+        query: [String: String]?,
+        cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
 }
 
@@ -66,40 +71,44 @@ public class DefaultHttpConnect : IHttpConnect {
     let baseURL: URL
     let session: URLSession
     
-    public init(baseURL: URL) {
+    public init(baseURL: URL, session:URLSession? = nil) {
         self.baseURL = baseURL
-        self.session = URLSession(configuration: .default)
+        if let session = session{
+            self.session =  session
+        }else{
+            self.session = URLSession(configuration: .default)
+        }
     }
     
     
     //protocall metods
-    public func get< T: Codable>(_ url: String, headers: [String : String]? = nil, query: [String : String]? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try buildUrl(url, query: query, body: nil, headers: headers)
+    public func get< T: Codable>(_ url: String, headers: [String : String]? = nil, query: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+        var request = try buildUrl(url, query: query, body: nil, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "GET"
         return try await sendRequest(url: request)
     }
     
-    public func post< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil, query: [String : String]? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+    public func post< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil, query: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         
-        var request = try buildUrl(url, query: query, body: body, headers: headers)
+        var request = try buildUrl(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "POST"
         return try await sendRequest(url: request)
     }
     
-    public func put< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try buildUrl(url, query: nil, body: body, headers: headers)
+    public func put< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+        var request = try buildUrl(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PUT"
         return try await sendRequest(url: request)
     }
     
-    public func patch< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try buildUrl(url, query: nil, body: body, headers: headers)
+    public func patch< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+        var request = try buildUrl(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PATCH"
         return try await sendRequest(url: request)
     }
     
-    public func delete< T: Codable>(_ url: String, headers: [String : String]?, query: [String : String]? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try buildUrl(url, query: query, body: nil, headers: headers)
+    public func delete< T: Codable>(_ url: String, headers: [String : String]?, query: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+        var request = try buildUrl(url, query: query, body: nil, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "DELETE"
         return try await sendRequest(url: request)
     }
@@ -109,7 +118,8 @@ public class DefaultHttpConnect : IHttpConnect {
     func buildUrl( _ path: String,
                    query: [String : String]?,
                    body: Data?,
-                   headers: [String: String]?
+                   headers: [String: String]?,
+                   cachePolicy: URLRequest.CachePolicy?
                    
     )throws -> URLRequest{
         
@@ -157,6 +167,10 @@ public class DefaultHttpConnect : IHttpConnect {
         
         //body
         request.httpBody = body
+        
+        if let cachePolicy = cachePolicy{
+            request.cachePolicy = cachePolicy
+        }
         
         return request;
         
