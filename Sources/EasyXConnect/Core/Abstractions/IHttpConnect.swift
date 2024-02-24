@@ -32,6 +32,14 @@ protocol IHttpConnect {
         cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     
+    func post<T: Codable>(
+        _ url: String,
+        body: MultipartDTO?,
+        headers: [String: String]?,
+        query: [String: String]?,
+        cachePolicy: URLRequest.CachePolicy?
+    ) async throws ->  AppResponse<T>
+    
     func put<T: Codable>(
         _ url: String,
         body: Data?,
@@ -39,9 +47,22 @@ protocol IHttpConnect {
         cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     
+    func put<T: Codable>(
+        _ url: String,
+        body: MultipartDTO?,
+        headers: [String: String]?,
+        cachePolicy: URLRequest.CachePolicy?
+    ) async throws ->  AppResponse<T>
+    
     func patch<T: Codable>(
         _ url: String,
         body: Data?,
+        headers: [String: String]?,
+        cachePolicy: URLRequest.CachePolicy?
+    ) async throws ->  AppResponse<T>
+    func patch<T: Codable>(
+        _ url: String,
+        body: MultipartDTO?,
         headers: [String: String]?,
         cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
@@ -64,6 +85,11 @@ public protocol Intercepter{
 
 
 public class DefaultHttpConnect : IHttpConnect {
+   
+ 
+    
+    
+    
     
     public var intersepters: [Intercepter] = []
     
@@ -83,99 +109,91 @@ public class DefaultHttpConnect : IHttpConnect {
     
     //protocall metods
     public func get< T: Codable>(_ url: String, headers: [String : String]? = nil, query: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try buildUrl(url, query: query, body: nil, headers: headers,cachePolicy: cachePolicy)
+        var request = try requestBuilder(url, query: query, body: nil, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "GET"
         return try await sendRequest(url: request)
     }
     
     public func post< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil, query: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         
-        var request = try buildUrl(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
+        var request = try requestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
+        request.httpMethod = "POST"
+        return try await sendRequest(url: request)
+    }
+    
+    //Maltipart request [post]
+    func post<T>(_ url: String, body: MultipartDTO?, headers: [String : String]?, query: [String : String]?, cachePolicy: URLRequest.CachePolicy?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+        var request = try multiPartRequestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "POST"
         return try await sendRequest(url: request)
     }
     
     public func put< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try buildUrl(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        var request = try requestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        request.httpMethod = "PUT"
+        return try await sendRequest(url: request)
+    }
+    
+    //Maltipart request [put]
+    func put<T>(_ url: String, body: MultipartDTO?, headers: [String : String]?, cachePolicy: URLRequest.CachePolicy?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+        var request = try multiPartRequestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PUT"
         return try await sendRequest(url: request)
     }
     
     public func patch< T: Codable>(_ url: String, body: Data?, headers: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try buildUrl(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        var request = try requestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        request.httpMethod = "PATCH"
+        return try await sendRequest(url: request)
+    }
+    
+    //Maltipart request [patch]
+    func patch<T>(_ url: String, body: MultipartDTO?, headers: [String : String]?, cachePolicy: URLRequest.CachePolicy?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+        var request = try multiPartRequestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PATCH"
         return try await sendRequest(url: request)
     }
     
     public func delete< T: Codable>(_ url: String, headers: [String : String]?, query: [String : String]? = nil, cachePolicy: URLRequest.CachePolicy? = nil) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try buildUrl(url, query: query, body: nil, headers: headers,cachePolicy: cachePolicy)
+        var request = try requestBuilder(url, query: query, body: nil, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "DELETE"
         return try await sendRequest(url: request)
     }
     
     
     
-    func buildUrl( _ path: String,
-                   query: [String : String]?,
-                   body: Data?,
-                   headers: [String: String]?,
-                   cachePolicy: URLRequest.CachePolicy?
-                   
+    private func requestBuilder( _ path: String,
+                                 query: [String : String]?,
+                                 body: Data?,
+                                 headers: [String: String]?,
+                                 cachePolicy: URLRequest.CachePolicy?
+                                 
     )throws -> URLRequest{
-        
-        let url = path.isEmpty ? baseURL: URL(string: path, relativeTo: baseURL)
-        
-        guard let url = url else{
-            throw HTTPError.invalidURL
-        }
-        
-        var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)
-        
-        var queryItems:[URLQueryItem] = []
-        
-        // query params
-        if let query = query , !query.isEmpty{
-            
-            for item in query {
-                // print("\(item.key) => \(String(describing: item.value))")
-                let v =  URLQueryItem(name: item.key, value: item.value)
-                queryItems.append(v)
-            }
-            
-        }
-        
-        
-        
-        urlComponents?.queryItems = queryItems
-        
-        
-        guard let apiUrl = urlComponents?.url else {
-            throw HTTPError.invalidURL
-        }
-        print( "url => \(apiUrl.absoluteString)")
-        
-        var request = URLRequest(url: apiUrl)
-        
-        
-        
-        // headers
-        if let headers = headers, !headers.isEmpty {
-            headers.forEach { key, value in
-                request.setValue(value, forHTTPHeaderField: key)
-            }
-        }
-        
-        //body
-        request.httpBody = body
-        
-        if let cachePolicy = cachePolicy{
-            request.cachePolicy = cachePolicy
-        }
-        
-        return request;
-        
+        return try RequestBuilder.buildRequest(path, baseURL: baseURL, query: query, body: body, headers: headers, cachePolicy: cachePolicy)
     }
     
+    private func multiPartRequestBuilder( _ path: String,
+                                 query: [String : String]?,
+                                 body: MultipartDTO?,
+                                 headers: [String: String]?,
+                                 cachePolicy: URLRequest.CachePolicy?
+                                 
+    )throws -> URLRequest{
+        var allHeaders: [String : String] = [:]
+        if let headers = headers{
+            for (key ,value) in headers{
+                allHeaders[key] = value
+            }
+        }
+        
+        if let headers = body?.getHeader(){
+            for (key ,value) in headers{
+                allHeaders[key] = value
+            }
+        }
+        
+        return try requestBuilder(path, query: query, body: body?.toData(), headers: allHeaders,cachePolicy: cachePolicy)
+    }
     
     
     private func sendRequest<R: Codable>(url: URLRequest  )async throws -> AppResponse<R> {
@@ -187,13 +205,10 @@ public class DefaultHttpConnect : IHttpConnect {
             var reqData: Data?
             //MARK: intercepters on request
             for intersepter in intersepters{
-                
                 ( req , reqData) = intersepter.onRequest(req: req)
-                
             }
             
             if let data = reqData {
-                
                 /// cache true return response
                 let responseData = try JSONDecoder().decode(R.self, from: data)
                 
@@ -201,12 +216,10 @@ public class DefaultHttpConnect : IHttpConnect {
                 return AppResponse(statusCode: 298 , payload: responseData);
             }
             
-            
             //MARK: make request
             let (data, res) = try await session.data(for: req)
             
             let response = res as? HTTPURLResponse
-            
             
             var resData:Data = data
             
@@ -215,13 +228,6 @@ public class DefaultHttpConnect : IHttpConnect {
                 
                 resData = intersepter.onResponse(req: url, res: res, data: data)
             }
-            
-            
-            if let type = response?.allHeaderFields["Content-Type"]{
-                print(type)
-            }
-            
-            
             
             if R.self == Data.self{
                 return AppResponse(statusCode:  response?.statusCode ?? 299 , payload: resData as? R);
@@ -254,9 +260,6 @@ public class DefaultHttpConnect : IHttpConnect {
             throw error
         }
     }
-    
-    
-    
 }
 
 
