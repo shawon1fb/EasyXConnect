@@ -172,7 +172,7 @@ public class ExHttpConnect : IHttpConnect {
             // cache true return response
             if let data = reqData {
                 //MARK: cahce response 298
-                return DataToObjectConverter.dataToObject(data: data, statusCode: 298)
+                return try DataToObjectConverter.dataToObject(data: data, statusCode: 298)
             }
             
             //MARK: make request
@@ -187,7 +187,7 @@ public class ExHttpConnect : IHttpConnect {
                 
                 resData = intersepter.onResponse(req: url, res: res, data: data)
             }
-            return DataToObjectConverter.dataToObject(data: resData, statusCode: response?.statusCode ?? 299)
+            return try DataToObjectConverter.dataToObject(data: resData, statusCode: response?.statusCode ?? 299)
         }catch let error as DecodingError {
             switch error {
             case .dataCorrupted(let context):

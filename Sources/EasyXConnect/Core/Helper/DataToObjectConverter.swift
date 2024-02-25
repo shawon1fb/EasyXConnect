@@ -9,7 +9,7 @@ import Foundation
 
 public class DataToObjectConverter{
     
-    static public func dataToObject<R: Codable>(data:Data, statusCode:Int)->AppResponse<R>{
+    static public func dataToObject<R: Codable>(data:Data, statusCode:Int)throws ->AppResponse<R>{
         if R.self == Data.self{
             return AppResponse(statusCode:  statusCode , payload: data as? R);
         }
