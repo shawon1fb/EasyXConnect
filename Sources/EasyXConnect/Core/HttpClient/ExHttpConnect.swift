@@ -157,7 +157,7 @@ public class ExHttpConnect : IHttpConnect {
     }
     
     
-    private func sendRequest<R: Codable>(url: URLRequest  )async throws -> AppResponse<R> {
+    public func sendRequest<R: Codable>(url: URLRequest  )async throws -> AppResponse<R> {
         
         do{
             
