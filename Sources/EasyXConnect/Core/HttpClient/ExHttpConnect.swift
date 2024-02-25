@@ -19,7 +19,7 @@ public class ExHttpConnect : IHttpConnect {
         if let session = session{
             self.session =  session
         }else{
-            self.session = URLSession(configuration: .default)
+            self.session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue())
         }
     }
     
@@ -169,12 +169,10 @@ public class ExHttpConnect : IHttpConnect {
                 ( req , reqData) = intersepter.onRequest(req: req)
             }
             
+            // cache true return response
             if let data = reqData {
-                /// cache true return response
-                let responseData = try JSONDecoder().decode(R.self, from: data)
-                
                 //MARK: cahce response 298
-                return AppResponse(statusCode: 298 , payload: responseData);
+                return DataToObjectConverter.dataToObject(data: data, statusCode: 298)
             }
             
             //MARK: make request
@@ -189,18 +187,7 @@ public class ExHttpConnect : IHttpConnect {
                 
                 resData = intersepter.onResponse(req: url, res: res, data: data)
             }
-            
-            if R.self == Data.self{
-                return AppResponse(statusCode:  response?.statusCode ?? 299 , payload: resData as? R);
-            }
-            
-            if R.self == String.self{
-                return AppResponse(statusCode:  response?.statusCode ?? 299 , payload: String(data: resData, encoding: .utf8) as? R);
-            }
-            
-            let responseData = try JSONDecoder().decode(R.self, from: resData)
-            
-            return AppResponse(statusCode:  response?.statusCode ?? 299 , payload: responseData);
+            return DataToObjectConverter.dataToObject(data: resData, statusCode: response?.statusCode ?? 299)
         }catch let error as DecodingError {
             switch error {
             case .dataCorrupted(let context):
@@ -217,7 +204,6 @@ public class ExHttpConnect : IHttpConnect {
             throw error
         } catch {
             debugPrint("Error during decoding: \(error.localizedDescription)")
-            
             throw error
         }
     }

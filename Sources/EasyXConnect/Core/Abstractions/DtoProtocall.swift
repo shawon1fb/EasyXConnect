@@ -33,10 +33,7 @@ public protocol MultipartDTO: DTO{
     var boundary:String { get set }
 }
 
-
-
 extension MultipartDTO{
-    
     
     public  func getHeader()->[String:String]{
         //let boundary:String = generateBoundary()
