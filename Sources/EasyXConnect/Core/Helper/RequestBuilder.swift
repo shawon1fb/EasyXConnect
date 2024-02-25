@@ -20,24 +20,20 @@ public final class RequestBuilder{
     )throws -> URLRequest{
         
         let url = path.isEmpty ? baseURL: URL(string: path, relativeTo: baseURL)
-        
         guard let url = url else{
             throw HTTPError.invalidURL
         }
         
         var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)
-        
         var queryItems:[URLQueryItem] = []
         
         // query params
         if let query = query , !query.isEmpty{
-            
             for item in query {
                 // print("\(item.key) => \(String(describing: item.value))")
                 let v =  URLQueryItem(name: item.key, value: item.value)
                 queryItems.append(v)
             }
-            
         }
         
         urlComponents?.queryItems = queryItems
