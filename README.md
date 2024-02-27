@@ -61,7 +61,7 @@ send requests:
 ``` swift
 func uploadFiles(files: [URL]) async throws {
     let dto = MultipartDTO(files: files)
-    let response: AppResponse = try await client.post(
+    let response: AppResponse<String> = try await client.post(
         "uploads",
         body: dto.toData(),
         headers: dto.getHeaders()
