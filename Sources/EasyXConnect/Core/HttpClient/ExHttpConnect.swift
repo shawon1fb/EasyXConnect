@@ -68,9 +68,10 @@ public class ExHttpConnect : IHttpConnect {
         _ url: String,
         body: Data?,
         headers: [String : String]? = nil,
+        query: [String: String]? = nil,
         cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try requestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        var request = try requestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PUT"
         return try await sendRequest(url: request)
     }
@@ -80,9 +81,10 @@ public class ExHttpConnect : IHttpConnect {
         _ url: String,
         body: MultipartDTO?,
         headers: [String : String]?,
+        query: [String: String]? = nil,
         cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try multiPartRequestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        var request = try multiPartRequestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PUT"
         return try await sendRequest(url: request)
     }
@@ -91,9 +93,10 @@ public class ExHttpConnect : IHttpConnect {
         _ url: String,
         body: Data?,
         headers: [String : String]? = nil,
+        query: [String: String]? = nil,
         cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try requestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        var request = try requestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PATCH"
         return try await sendRequest(url: request)
     }
@@ -103,9 +106,10 @@ public class ExHttpConnect : IHttpConnect {
         _ url: String,
         body: MultipartDTO?,
         headers: [String : String]?,
+        query: [String: String]? = nil,
         cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try multiPartRequestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        var request = try multiPartRequestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PATCH"
         return try await sendRequest(url: request)
     }

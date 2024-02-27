@@ -44,6 +44,7 @@ protocol IHttpConnect {
         _ url: String,
         body: Data?,
         headers: [String: String]?,
+        query: [String: String]?,
         cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     
@@ -51,6 +52,7 @@ protocol IHttpConnect {
         _ url: String,
         body: MultipartDTO?,
         headers: [String: String]?,
+        query: [String: String]?,
         cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     
@@ -58,12 +60,15 @@ protocol IHttpConnect {
         _ url: String,
         body: Data?,
         headers: [String: String]?,
+        query: [String: String]?,
         cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
+    
     func patch<T: Codable>(
         _ url: String,
         body: MultipartDTO?,
         headers: [String: String]?,
+        query: [String: String]?,
         cachePolicy: URLRequest.CachePolicy?
     ) async throws ->  AppResponse<T>
     

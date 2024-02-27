@@ -8,9 +8,9 @@ EasyConnect is a Swift package that simplifies making HTTP requests,
 including multipart data uploads, with a focus on ease of use and error
 handling.
 
--   **Version:** (0.0.0)
--   **Author:** (shahanul)
--   **License:** (not yet)
+-   **Version:** ( 0.0.1 )
+-   **Author:** ( Shahanul )
+-   **License:** ( MIT License )
 
 ## Installation
 
