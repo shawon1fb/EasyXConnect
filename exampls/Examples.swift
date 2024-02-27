@@ -46,6 +46,36 @@ func makePostRequest()async throws{
     }
 }
 
+struct UploadPhotos: MultipartDTO{
+    var boundary: String = FormData.generateBoundary()
+    
+    let id: Int
+    let images: [URL]
+    
+    func toJsonMap() -> [String: AnyEncodable]? {
+        var map: [String: AnyEncodable] = [:]
+        map["id"] = AnyEncodable(id)
+        map["files"] = AnyEncodable(images)
+        return map
+    }
+}
+
+func uploadImages()async throws{
+    let image1 = URL.downloadsDirectory.appending(components: "images.jpeg")
+    let image2 = URL.downloadsDirectory.appending(components: "swift-og.png")
+    let images: [URL] = [image1, image2]
+    let dto = UploadPhotos(id: 10, images: images)
+    print(dto.toString())
+    
+    // Adding the 'dto.getHeaders()' header is mandatory when providing the request body as 'dto.toData()'.
+    //  let response: AppResponse<UserResponse> = try await client.post("uploads", body: dto.toData(), headers: dto.getHeader())
+    //  or
+    let response: AppResponse<UserResponse> = try await client.post("uploads", body: dto)
+    if let payload = response.payload{
+        print(payload)
+    }
+}
+
 // examle of [get] request with query params
 struct UserListDTO: DTO{
     let name: String

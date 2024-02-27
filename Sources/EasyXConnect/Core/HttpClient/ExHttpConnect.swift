@@ -55,8 +55,8 @@ public class ExHttpConnect : IHttpConnect {
     public func post<T>(
         _ url: String,
         body: MultipartDTO?,
-        headers: [String : String]?,
-        query: [String : String]?,
+        headers: [String : String]? = nil,
+        query: [String : String]? = nil,
         cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try multiPartRequestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
