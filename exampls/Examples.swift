@@ -76,7 +76,7 @@ func uploadImages()async throws{
     }
 }
 
-// examle of [get] request with query params
+// example of [get] request with query params
 struct UserListDTO: DTO{
     let name: String
 }
@@ -90,7 +90,7 @@ func makeGetRequest()async throws{
     }
 }
 
-// examle of [delete] request with query params
+// example of [delete] request with query params
 struct DeleteUserDTO: DTO{
     let name: String
 }
