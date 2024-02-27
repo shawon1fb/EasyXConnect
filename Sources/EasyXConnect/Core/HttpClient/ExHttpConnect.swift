@@ -9,6 +9,8 @@ import Foundation
 
 
 public class ExHttpConnect : IHttpConnect {
+    
+    
     public var intersepters: [Intercepter] = []
     
     let baseURL: URL
@@ -110,15 +112,21 @@ public class ExHttpConnect : IHttpConnect {
     
     public func delete< T: Codable>(
         _ url: String,
+        body: Data? = nil,
         headers: [String : String]?,
         query: [String : String]? = nil,
         cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try requestBuilder(url, query: query, body: nil, headers: headers,cachePolicy: cachePolicy)
+        var request = try requestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "DELETE"
         return try await sendRequest(url: request)
     }
     
+    func delete<T>(_ url: String, body: MultipartDTO? = nil, headers: [String : String]?, query: [String : String]?, cachePolicy: URLRequest.CachePolicy?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
+        var request = try multiPartRequestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
+        request.httpMethod = "DELETE"
+        return try await sendRequest(url: request)
+    }
     
     
     private func requestBuilder(
