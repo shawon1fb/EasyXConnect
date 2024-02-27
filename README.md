@@ -18,10 +18,8 @@ handling.
 
 ``` code
 dependencies: [
-    .package(url: "https://github.com/your-repo/EasyXConnect", from: "1.0.0")
+    .package(url: "https://github.com/shawon1fb/EasyXConnect.git", from: "1.0.0")
 ]
-
-    
 ```
 
 
