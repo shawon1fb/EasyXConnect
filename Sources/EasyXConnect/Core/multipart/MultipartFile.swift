@@ -5,6 +5,8 @@
 //  Created by shahanul on 24/2/24.
 //
 import Foundation
+import UniformTypeIdentifiers
+import MobileCoreServices
 
 public struct MultipartFile {
     let data: Data
@@ -23,10 +25,24 @@ extension URL{
             
             // Determine content type based on file extension
             var contentType = "application/octet-stream"
-            if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension as CFString, nil)?.takeRetainedValue(),
-               let mimetype = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() {
-                contentType = mimetype as String
+            
+//            if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension as CFString, nil)?.takeRetainedValue(),
+//               let mimetype = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() {
+//                contentType = mimetype as String
+//            }
+            if #available(iOS 14.0, *) {
+                if let typeIdentifier = UTType(filenameExtension: pathExtension)?.identifier,
+                   let mimeType = UTType(typeIdentifier)?.preferredMIMEType {
+                    contentType = mimeType
+                }
+            } else {
+                // Fallback on earlier versions
+                if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension as CFString, nil)?.takeRetainedValue(),
+                   let mimetype = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() {
+                    contentType = mimetype as String
+                }
             }
+            
             
             return MultipartFile(data: data, filename: filename, contentType: contentType)
         } catch {
@@ -103,7 +119,7 @@ public struct FormData {
         
         return data
     }
-
+    
 }
 
 // Example usage:

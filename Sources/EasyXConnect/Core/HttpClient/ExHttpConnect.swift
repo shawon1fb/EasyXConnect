@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import Combine
 
-
+@available(iOS 13.0, macOS 10.15.0, watchOS 6.0, tvOS 13.0, *)
 public class ExHttpConnect : IHttpConnect {
     
     
@@ -188,7 +189,8 @@ public class ExHttpConnect : IHttpConnect {
             }
             
             //MARK: make request
-            let (data, res) = try await session.data(for: req)
+            
+            let (data, res) = try await performRequest(req)
             
             let response = res as? HTTPURLResponse
             
@@ -217,6 +219,26 @@ public class ExHttpConnect : IHttpConnect {
         } catch {
             debugPrint("Error during decoding: \(error.localizedDescription)")
             throw error
+        }
+    }
+    
+    // This function to make the network request compatible with iOS versions prior to 15.0
+    func performRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        if #available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *){
+            return try await session.data(for: request)
+        }else{
+            return try await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<(Data, URLResponse), Error>) in
+                session.dataTask(with: request) { data, response, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    }
+                    else {
+                        if let data = data, let response = response {
+                            continuation.resume(with: .success((data, response)))
+                        }
+                    }
+                }
+            })
         }
     }
 }
