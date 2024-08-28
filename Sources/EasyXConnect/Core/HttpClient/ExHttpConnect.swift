@@ -12,7 +12,7 @@ import Combine
 public class ExHttpConnect : IHttpConnect {
     
     
-    public var intersepters: [Intercepter] = []
+    public var intercepters: [Intercepter] = []
     
     let baseURL: URL
     let session: URLSession
@@ -27,7 +27,7 @@ public class ExHttpConnect : IHttpConnect {
     }
     
     
-    //protocall metods
+    //protocol metods
     public func get< T: Codable>(
         _ url: String,
         headers: [String : String]? = nil,
@@ -52,7 +52,7 @@ public class ExHttpConnect : IHttpConnect {
         return try await sendRequest(url: request)
     }
     
-    //Maltipart request [post]
+    //Multipart request [post]
     public func post<T>(
         _ url: String,
         body: MultipartDTO?,
@@ -60,7 +60,7 @@ public class ExHttpConnect : IHttpConnect {
         query: [String : String]? = nil,
         cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
-        var request = try multiPartRequestBuilder(url, query: nil, body: body, headers: headers,cachePolicy: cachePolicy)
+        var request = try multiPartRequestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "POST"
         return try await sendRequest(url: request)
     }
@@ -77,7 +77,7 @@ public class ExHttpConnect : IHttpConnect {
         return try await sendRequest(url: request)
     }
     
-    //Maltipart request [put]
+    //Multipart request [put]
     public func put<T>(
         _ url: String,
         body: MultipartDTO?,
@@ -178,13 +178,13 @@ public class ExHttpConnect : IHttpConnect {
             
             var reqData: Data?
             //MARK: intercepters on request
-            for intersepter in intersepters{
+            for intersepter in intercepters{
                 ( req , reqData) = intersepter.onRequest(req: req)
             }
             
             // cache true return response
             if let data = reqData {
-                //MARK: cahce response 298
+                //MARK: cache response 298
                 return try DataToObjectConverter.dataToObject(data: data, statusCode: 298)
             }
             
@@ -197,7 +197,7 @@ public class ExHttpConnect : IHttpConnect {
             var resData:Data = data
             
             //MARK: intercepters on response
-            for intersepter in intersepters{
+            for intersepter in intercepters{
                 
                 resData = intersepter.onResponse(req: url, res: res, data: data)
             }

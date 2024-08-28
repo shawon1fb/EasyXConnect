@@ -1,5 +1,5 @@
 //
-//  DtoProtocall.swift
+//  DTOProtocoll.swift
 //
 //
 //  Created by shahanul on 24/2/24.

@@ -15,7 +15,7 @@ public enum HTTPError: Error {
 
 protocol IHttpConnect {
     
-    var intersepters:[ Intercepter ] { get set }
+    var intercepters:[ Intercepter ] { get set }
     
     func get<T: Codable>(
         _ url: String,
