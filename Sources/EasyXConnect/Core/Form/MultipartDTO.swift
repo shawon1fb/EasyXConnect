@@ -28,8 +28,6 @@ extension MultipartDTO {
 
   public func toData() -> Data? {
     if let map = toJsonMap() {
-      //  let boundary:String = generateBoundary()
-      // print("boundary -> ",boundary)
       let formData = FormData(map: map, boundary: boundary)
       return formData.toBytes()
     }

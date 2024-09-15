@@ -14,32 +14,47 @@ public protocol DTO: Encodable {
 }
 
 extension DTO {
-    public func toJsonMap() -> [String: AnyEncodable]? {
-        let mirror = Mirror(reflecting: self)
-        var map = [String: AnyEncodable]()
+  public func toJsonMap() -> [String: AnyEncodable]? {
+    let mirror = Mirror(reflecting: self)
+    var map = [String: AnyEncodable]()
 
-        for case let (label?, value) in mirror.children {
-            // Check if the value is Optional
-            let mirrorValue = Mirror(reflecting: value)
-            if mirrorValue.displayStyle == .optional {
-                if mirrorValue.children.isEmpty {
-                    // Skip nil optionals
-                    continue
-                }
-            }
-
-            // Handle encodable values
-            if let encodableValue = value as? Encodable {
-                map[label] = AnyEncodable(encodableValue)
-            } else if let guardValue = value as? CustomStringConvertible {
-                // Convert non-encodable values using CustomStringConvertible
-                map[label] = AnyEncodable(guardValue.description)
-            }
+    for case let (label?, value) in mirror.children {
+      // Check if the value is Optional
+      let mirrorValue = Mirror(reflecting: value)
+      if mirrorValue.displayStyle == .optional {
+        if mirrorValue.children.isEmpty {
+          // Skip nil optionals
+          continue
         }
+      }
 
-        return map.isEmpty ? nil : map
+      if let fieldWrapper = value as? AnyFieldName {
+        let wrappedValue = fieldWrapper.getWrappedValue()
+        if !isNil(wrappedValue) {
+          map[fieldWrapper.getKey()] = AnyEncodable(wrappedValue)
+        }
+      }
+      // Handle encodable values
+      else if let encodableValue = value as? Encodable {
+        map[label] = AnyEncodable(encodableValue)
+      } else if let guardValue = value as? CustomStringConvertible {
+        // Convert non-encodable values using CustomStringConvertible
+        map[label] = AnyEncodable(guardValue.description)
+      }
     }
 
+    return map.isEmpty ? nil : map
+  }
+
+  private func isNil(_ value: Any) -> Bool {
+    let mirror = Mirror(reflecting: value)
+    if mirror.displayStyle == .optional {
+      if mirror.children.isEmpty {
+        return true
+      }
+    }
+    return false
+  }
 
   public func toData() -> Data? {
     guard let map = toJsonMap() else { return nil }
