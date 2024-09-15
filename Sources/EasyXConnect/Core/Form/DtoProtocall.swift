@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 public protocol DTO: Encodable {
   func toData() -> Data?
   func toJsonMap() -> [String: AnyEncodable]?
@@ -15,24 +14,32 @@ public protocol DTO: Encodable {
 }
 
 extension DTO {
+    public func toJsonMap() -> [String: AnyEncodable]? {
+        let mirror = Mirror(reflecting: self)
+        var map = [String: AnyEncodable]()
 
-  public func toJsonMap() -> [String: AnyEncodable]? {
-    let mirror = Mirror(reflecting: self)
-    var map = [String: AnyEncodable]()
+        for case let (label?, value) in mirror.children {
+            // Check if the value is Optional
+            let mirrorValue = Mirror(reflecting: value)
+            if mirrorValue.displayStyle == .optional {
+                if mirrorValue.children.isEmpty {
+                    // Skip nil optionals
+                    continue
+                }
+            }
 
-    for case let (label?, value) in mirror.children {
-      // Handle optional and non-encodable values gracefully:
-      if let encodableValue = value as? Encodable {
-        map[label] = AnyEncodable(encodableValue)
-      } else {
-        // Optionally handle non-encodable values here if needed
-        // For example, you could convert them to string representations:
-        map[label] = AnyEncodable(String(describing: value))
-      }
+            // Handle encodable values
+            if let encodableValue = value as? Encodable {
+                map[label] = AnyEncodable(encodableValue)
+            } else if let guardValue = value as? CustomStringConvertible {
+                // Convert non-encodable values using CustomStringConvertible
+                map[label] = AnyEncodable(guardValue.description)
+            }
+        }
+
+        return map.isEmpty ? nil : map
     }
 
-    return map
-  }
 
   public func toData() -> Data? {
     guard let map = toJsonMap() else { return nil }
@@ -65,10 +72,10 @@ extension DTO {
       for (key, value) in jsonObject {
         if let stringValue = value.value as? String {
           queryParams[key] = stringValue
-        } else if let numberValue = value.value as? NSNumber {
-          queryParams[key] = "\(numberValue)"
         } else if let boolValue = value.value as? Bool {
           queryParams[key] = boolValue ? "true" : "false"
+        } else if let numberValue = value.value as? NSNumber {
+          queryParams[key] = "\(numberValue)"
         } else if let value = value.value as? DTO {
           queryParams[key] = value.toString()
         } else {
