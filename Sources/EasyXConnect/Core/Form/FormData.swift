@@ -1,12 +1,16 @@
 //
-//  MultipartFile.swift
+//  FormData.swift
 //
 //
 //  Created by shahanul on 24/2/24.
 //
+
 import Foundation
 import UniformTypeIdentifiers
+
+#if canImport(MobileCoreServices)
 import MobileCoreServices
+#endif
 
 public struct MultipartFile {
     let data: Data
@@ -14,7 +18,7 @@ public struct MultipartFile {
     let contentType: String
 }
 
-extension URL{
+extension URL {
     public func toMultipartFile() -> MultipartFile? {
         do {
             // Read file data from URL
@@ -26,23 +30,21 @@ extension URL{
             // Determine content type based on file extension
             var contentType = "application/octet-stream"
             
-//            if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension as CFString, nil)?.takeRetainedValue(),
-//               let mimetype = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() {
-//                contentType = mimetype as String
-//            }
-            if #available(iOS 14.0, *) {
-                if let typeIdentifier = UTType(filenameExtension: pathExtension)?.identifier,
-                   let mimeType = UTType(typeIdentifier)?.preferredMIMEType {
+            if #available(iOS 14.0, macOS 11.0, *) {
+                // Use UniformTypeIdentifiers in iOS 14+ and macOS 11+
+                if let type = UTType(filenameExtension: pathExtension),
+                   let mimeType = type.preferredMIMEType {
                     contentType = mimeType
                 }
             } else {
-                // Fallback on earlier versions
+                #if canImport(MobileCoreServices)
+                // Use MobileCoreServices for earlier versions
                 if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension as CFString, nil)?.takeRetainedValue(),
-                   let mimetype = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() {
-                    contentType = mimetype as String
+                   let mimeType = UTTypeCopyPreferredTagWithClass(uti, kUTTagClassMIMEType)?.takeRetainedValue() {
+                    contentType = mimeType as String
                 }
+                #endif
             }
-            
             
             return MultipartFile(data: data, filename: filename, contentType: contentType)
         } catch {
@@ -51,6 +53,7 @@ extension URL{
         }
     }
 }
+
 
 public struct FormData {
     private static let maxBoundaryLength = 70
