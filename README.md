@@ -1,217 +1,280 @@
-# EasyConnect Documentation
 
-------------------------------------------------------------------------
+```
+                        (__)
+                        (DD)
+                 /-------\/
+               / |     ||_\_/
+               *  ||----|
+                  ^^    ^
+```
+# EasyConnect
 
-## Introduction
+EasyConnect is a Swift package that simplifies HTTP requests, including multipart data uploads. It's designed for developers who want an easy-to-use solution for interacting with RESTful APIs, with a focus on simplicity and robust error handling.
 
-EasyConnect is a Swift package that simplifies making HTTP requests,
-including multipart data uploads, with a focus on ease of use and error
-handling.
+## Features
 
--   **Version:** ( 0.0.1 )
--   **Author:** ( Shahanul )
--   **License:** ( MIT License )
+- 🚀 Simple and intuitive API for HTTP requests
+- 🔄 Support for GET, POST, PUT, DELETE, and PATCH methods
+- 📁 Easy handling of multipart form data for file uploads
+- ⚠️ Built-in error handling and response parsing
+- 🔧 Customizable headers and query parameters
+- ⏳ Asynchronous operations using Swift's modern concurrency features
 
 ## Installation
 
 ### Swift Package Manager
 
-``` code
+Add the following dependency to your `Package.swift` file:
+
+```swift
 dependencies: [
     .package(url: "https://github.com/shawon1fb/EasyXConnect.git", from: "1.0.0")
 ]
 ```
 
+## Quick Start
 
-## Usage
+1. **Import the package:**
 
-### Importing the Package
+    ```swift
+    import EasyXConnect
+    ```
 
-``` swift
-import EasyXConnect
-    
-```
+2. **Create a client instance:**
 
-### Making HTTP Requests
+    ```swift
+    let baseURL = URL(string: "https://httpbin.org")!
+    let client = ExHttpConnect(baseURL: baseURL)
+    ```
 
-#### Base URL
+3. **Make a simple GET request:**
 
-Establish a base URL for your API or server:
+    ```swift
+    // Define the expected response structure
+    struct GetResponse: Decodable {
+        let args: [String: String]
+        let headers: [String: String]
+        let origin: String
+        let url: String
+    }
 
-``` swift
-let baseURL = URL(string: "https://your-api-endpoint.com")!
-    
-```
+    do {
+        let response: AppResponse<GetResponse> = try await client.get("get")
+        if let payload = response.payload {
+            print("Response:", payload)
+        }
+    } catch {
+        print("Error:", error)
+    }
+    ```
 
-#### Client Initialization
+## Usage Examples
 
-Create an \`ExHttpConnect\` instance with the base URL:
+### GET Request with Query Parameters
 
-``` swift
-let client = ExHttpConnect(baseURL: baseURL)
-    
-```
+```swift
+// Define the DTO for query parameters
+struct GetInfoDTO: DTO {
+    let foo: String
+    let bar: Int
 
-#### Making Requests
-
-Use the appropriate method (\`get\`, \`post\`, \`put\`, \`delete\`) to
-send requests:
-
-##### Example (POST request with multipart data):
-
-``` swift
-func uploadFiles(files: [URL]) async throws {
-    let dto = MultipartDTO(files: files)
-    let response: AppResponse<String> = try await client.post(
-        "uploads",
-        body: dto.toData(),
-        headers: dto.getHeaders()
-    )
-    if let payload = response.payload {
-        print(payload)
-    } else {
-        print("No payload received")
+    func toQueryParams() -> [String: String]? {
+        return [
+            "foo": foo,
+            "bar": String(bar)
+        ]
     }
 }
-    
-```
 
-### Multipart Data Uploads
-
-Create a \`MultipartDTO\` instance to represent the multipart data:
-
-``` swift
-struct MyDTO: MultipartDTO {
-    var boundary: String = FormData.generateBoundary()
-    let files: [URL]
+// Define the expected response structure
+struct GetInfoResponse: Decodable {
+    let args: [String: String]
+    let headers: [String: String]
+    let origin: String
+    let url: String
 }
-    
+
+func fetchInfo() async throws {
+    let dto = GetInfoDTO(foo: "hello", bar: 123)
+    let response: AppResponse<GetInfoResponse> = try await client.get(
+        "get",
+        headers: ["Custom-Header": "EasyConnect-Demo"],
+        query: dto.toQueryParams()
+    )
+    if let payload = response.payload {
+        print("GET Response:", payload)
+    }
+}
+
+// Usage
+try await fetchInfo()
 ```
 
-Provide the \`files\` array containing the URLs of the files to upload.
+### POST Request with JSON Body
+
+```swift
+// Define the DTO for the request body
+struct PostDataDTO: DTO {
+    let name: String
+    let age: Int
+
+    func toJsonMap() -> [String: AnyEncodable]? {
+        return [
+            "name": AnyEncodable(name),
+            "age": AnyEncodable(age)
+        ]
+    }
+}
+
+// Define the expected response structure
+struct PostDataResponse: Decodable {
+    let json: [String: AnyCodable]
+    let data: String
+    let url: String
+    let headers: [String: String]
+}
+
+func postData(name: String, age: Int) async throws {
+    let dto = PostDataDTO(name: name, age: age)
+    let response: AppResponse<PostDataResponse> = try await client.post(
+        "post",
+        body: dto.toData(),
+        headers: ["Content-Type": "application/json"]
+    )
+    if let payload = response.payload {
+        print("POST Response:", payload)
+    }
+}
+
+// Usage
+try await postData(name: "John Doe", age: 30)
+```
+
+**Note:** You'll need to use `AnyCodable` or a similar solution to handle dynamic JSON keys and values.
+
+### Multipart File Upload
+
+```swift
+// Define the DTO for the multipart request
+struct UploadFileDTO: MultipartDTO {
+    var boundary: String = FormData.generateBoundary()
+    let filename: String
+    let fileURL: URL
+
+    func toJsonMap() -> [String: AnyEncodable]? {
+        return [
+            "file": AnyEncodable(fileURL)
+        ]
+    }
+}
+
+// Define the expected response structure
+struct UploadFileResponse: Decodable {
+    let files: [String: String]
+    let form: [String: String]
+    let headers: [String: String]
+    let url: String
+}
+
+func uploadFile(filename: String, fileURL: URL) async throws {
+    let dto = UploadFileDTO(filename: filename, fileURL: fileURL)
+    let response: AppResponse<UploadFileResponse> = try await client.post(
+        "post",
+        body: dto
+    )
+    if let payload = response.payload {
+        print("File Upload Response:", payload)
+    }
+}
+
+// Usage
+let fileURL = URL(fileURLWithPath: "/path/to/your/file.txt")
+try await uploadFile(filename: "example.txt", fileURL: fileURL)
+```
+
+### Handling Dynamic JSON Responses
+
+When the API returns a dynamic JSON structure that cannot be represented by a `Decodable` struct, you can handle the response using `AppResponse<Data>` and parse the data manually
+
+```swift
+do {
+    let response: AppResponse<Data> = try await client.get("get")
+    if let payload = response.payload {
+        let jsonObject = try JSONSerialization.jsonObject(with: payload, options: [])
+        print("Response:", jsonObject)
+    }
+} catch {
+    print("Error:", error)
+}
+
+```
+
+This approach allows you to handle any JSON structure without defining specific models. However, you lose the benefits of type safety and may need to handle casting and errors manually.
 
 ### Error Handling
 
-Wrap your request code in a \`try-catch\` block to handle potential
-errors:
+EasyConnect uses Swift's built-in error handling. Wrap your API calls in a `do-catch` block to handle potential errors:
 
-``` swift
+```swift
 do {
-    try await uploadFiles(files: [path1, path2, path3])
+    try await fetchInfo()
+} catch let error as HTTPError {
+    print("HTTP Error:", error)
 } catch {
-    print("Error uploading files:", error)
+    print("Unexpected error:", error)
 }
-    
 ```
 
-### More Exmapls
-``` swift
-import Foundation
-import EasyXConnect
+## Best Practices
 
-//create client
-let url = URL(string: "http://0.0.0.0:3000")!
-let client = ExHttpConnect(baseURL: url)
+1. **Use `Decodable` Structs:** Define `Decodable` structs to match your API responses for type-safe handling.
+2. **Use DTOs:** Create Data Transfer Objects (DTOs) to structure your request data.
+3. **Error Handling:** Always use `do-catch` blocks to handle errors gracefully.
+4. **Async/Await:** Leverage Swift's concurrency features for clean, readable code.
+5. **Custom Headers:** Use custom headers when needed for authentication or special requirements.
 
-// MARK: - Create User DTO
+## Advanced Usage
 
-// A `struct` representing the Data Transfer Object (DTO) for creating a new user.
-//
-// This DTO encapsulates the user's name, email, and secret password, which can be
-// used when sending data to a server to create a user account.
-struct CreateUserDTO: DTO {
-    let name: String
-    let email: String
-    let secretPassword: String
-    
-    // Converts the `CreateUserDTO` object to a JSON map in the format
-    // expected by the server.
-    func toJsonMap() -> [String: AnyEncodable]? {
-        var map: [String: AnyEncodable] = [:]
-        map["name"] = AnyEncodable(name)
-        map["email"] = AnyEncodable(email)
-        map["passeord"] = AnyEncodable(secretPassword)
-        return map
-    }
-}
+For more advanced usage, including custom interceptors, caching policies, and complex multipart uploads, please refer to the full API documentation.
 
-struct UserResponse: Codable{
-    let  name, email: String
-}
-func makePostRequest()async throws{
-    let dto = CreateUserDTO(name: "EasyX", email: "easyx@easy.com", secretPassword: "super_secret")
-    print(dto.toString())
-    let response: AppResponse<UserResponse> = try await client.post("create_user", body: dto.toData(), headers: ["Content-Type": "application/json"])
-    if let payload = response.payload{
-        print(payload)
-    }
-}
+## Contributing
 
-struct UploadPhotos: MultipartDTO{
-    var boundary: String = FormData.generateBoundary()
-    
-    let id: Int
-    let images: [URL]
-    
-    func toJsonMap() -> [String: AnyEncodable]? {
-        var map: [String: AnyEncodable] = [:]
-        map["id"] = AnyEncodable(id)
-        map["files"] = AnyEncodable(images)
-        return map
-    }
-}
+We welcome contributions to EasyConnect! If you'd like to contribute:
 
-func uploadImages()async throws{
-    let image1 = URL.downloadsDirectory.appending(components: "images.jpeg")
-    let image2 = URL.downloadsDirectory.appending(components: "swift-og.png")
-    let images: [URL] = [image1, image2]
-    let dto = UploadPhotos(id: 10, images: images)
-    print(dto.toString())
-    
-    // Adding the 'dto.getHeaders()' header is mandatory when providing the request body as 'dto.toData()'.
-    //  let response: AppResponse<UserResponse> = try await client.post("uploads", body: dto.toData(), headers: dto.getHeader())
-    //  or
-    let response: AppResponse<UserResponse> = try await client.post("uploads", body: dto)
-    if let payload = response.payload{
-        print(payload)
-    }
-}
+1. Fork the repository
+2. Create a new branch for your feature or bug fix
+3. Make your changes and write tests if applicable
+4. Submit a pull request with a clear description of your changes
 
-// example of [get] request with query params
-struct UserListDTO: DTO{
-    let name: String
-}
+Please ensure your code adheres to the existing style and passes all tests.
 
-func makeGetRequest()async throws{
-    let dto = UserListDTO(name: "easyx")
-    print(dto.toString())
-    let response: AppResponse<[UserResponse]> = try await client.get("user_list", headers: ["Content-Type": "application/json"], query: dto.toQueryParams())
-    if let payload = response.payload{
-        print(payload)
-    }
-}
+## License
 
-// example of [delete] request with query params
-struct DeleteUserDTO: DTO{
-    let name: String
-}
+EasyConnect is available under the MIT license. See the LICENSE file for more info.
 
-func makeDeleteRequest()async throws{
-    let dto = DeleteUserDTO(name: "easyx")
-    print(dto.toString())
-    let response: AppResponse<UserResponse> = try await client.delete("user_delete", headers: ["Content-Type": "application/json"], query: dto.toQueryParams())
-    if let payload = response.payload{
-        print(payload)
-    }
-}
+## Support
 
+If you encounter any issues or have questions, please file an issue on the GitHub repository.
+
+---
+
+Happy coding with EasyConnect! If you have any questions or need further assistance, don't hesitate to reach out.
+
+---
 ```
-
-## API Reference
-
-Please refer to the Swift package documentation for detailed information
-about each class, method, and property.
-
-## Contribution Guidelines
-
-Outline how users can contribute to the project
+        ^        (___)
+        ^        |*-*|
+        ^____  _  \o/`-\
+              \  / U   |
+               \/\   | /
+                 |   //
+                 |  C/
+                 \---/
+                 |/\ |
+                 || ||
+                 || ||
+                 || ||
+                Cool Cow
+```
+---
+        
