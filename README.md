@@ -9,7 +9,7 @@
 ```
 # EasyXConnect
 
-EasyConnect is a Swift package that simplifies HTTP requests, including multipart data uploads. It's designed for developers who want an easy-to-use solution for interacting with RESTful APIs, with a focus on simplicity and robust error handling.
+EasyXConnect is a Swift package that simplifies HTTP requests, including multipart data uploads. It's designed for developers who want an easy-to-use solution for interacting with RESTful APIs, with a focus on simplicity and robust error handling.
 
 ## Features
 
@@ -98,7 +98,7 @@ func fetchInfo() async throws {
     let dto = GetInfoDTO(foo: "hello", bar: 123)
     let response: AppResponse<GetInfoResponse> = try await client.get(
         "get",
-        headers: ["Custom-Header": "EasyConnect-Demo"],
+        headers: ["Custom-Header": "EasyXConnect-Demo"],
         query: dto.toQueryParams()
     )
     if let payload = response.payload {
@@ -206,7 +206,7 @@ This approach allows you to handle any JSON structure without defining specific 
 
 ### Error Handling
 
-EasyConnect uses Swift's built-in error handling. Wrap your API calls in a `do-catch` block to handle potential errors:
+EasyXConnect uses Swift's built-in error handling. Wrap your API calls in a `do-catch` block to handle potential errors:
 
 ```swift
 do {
@@ -232,7 +232,7 @@ For more advanced usage, including custom interceptors, caching policies, and co
 
 ## Contributing
 
-We welcome contributions to EasyConnect! If you'd like to contribute:
+We welcome contributions to EasyXConnect! If you'd like to contribute:
 
 1. Fork the repository
 2. Create a new branch for your feature or bug fix
@@ -243,7 +243,7 @@ Please ensure your code adheres to the existing style and passes all tests.
 
 ## License
 
-EasyConnect is available under the MIT license. See the LICENSE file for more info.
+EasyXConnect is available under the MIT license. See the LICENSE file for more info.
 
 ## Support
 
