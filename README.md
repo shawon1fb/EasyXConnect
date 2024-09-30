@@ -7,7 +7,7 @@
                *  ||----|
                   ^^    ^
 ```
-# EasyConnect
+# EasyXConnect
 
 EasyConnect is a Swift package that simplifies HTTP requests, including multipart data uploads. It's designed for developers who want an easy-to-use solution for interacting with RESTful APIs, with a focus on simplicity and robust error handling.
 
@@ -17,7 +17,7 @@ EasyConnect is a Swift package that simplifies HTTP requests, including multipar
 - 🔄 Support for GET, POST, PUT, DELETE, and PATCH methods
 - 📁 Easy handling of multipart form data for file uploads
 - ⚠️ Built-in error handling and response parsing
-- 🔧 Customizable headers and query parameters
+- 🔧 Customisable headers and query parameters
 - ⏳ Asynchronous operations using Swift's modern concurrency features
 
 ## Installation
@@ -251,7 +251,7 @@ If you encounter any issues or have questions, please file an issue on the GitHu
 
 ---
 
-Happy coding with EasyConnect! If you have any questions or need further assistance, don't hesitate to reach out.
+Happy coding with EasyXConnect! If you have any questions or need further assistance, don't hesitate to reach out.
 
 ---
 ```
