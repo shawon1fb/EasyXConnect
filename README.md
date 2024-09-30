@@ -117,13 +117,6 @@ try await fetchInfo()
 struct PostDataDTO: DTO {
     let name: String
     let age: Int
-
-    func toJsonMap() -> [String: AnyEncodable]? {
-        return [
-            "name": AnyEncodable(name),
-            "age": AnyEncodable(age)
-        ]
-    }
 }
 
 // Define the expected response structure
