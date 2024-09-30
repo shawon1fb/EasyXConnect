@@ -1,5 +1,5 @@
 //
-//  Example2.swift
+//  HttpbinExample.swift
 //  EasyXConnect
 //
 //  Created by shahanul on 30/9/24.
