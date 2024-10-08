@@ -18,8 +18,11 @@ extension DTO {
     let mirror = Mirror(reflecting: self)
     var map = [String: AnyEncodable]()
 
+    let codingKeys = CodingKeysFinder.collectCodingKeysValue(from: self)
+
     for case let (label?, value) in mirror.children {
       // Check if the value is Optional
+
       let mirrorValue = Mirror(reflecting: value)
       if mirrorValue.displayStyle == .optional {
         if mirrorValue.children.isEmpty {
@@ -27,6 +30,9 @@ extension DTO {
           continue
         }
       }
+
+      // Determine the key to use (either from CodingKeys or the property name)
+      let key = codingKeys[label] ?? label
 
       if let fieldWrapper = value as? AnyFieldName {
         let wrappedValue = fieldWrapper.getWrappedValue()
@@ -36,10 +42,10 @@ extension DTO {
       }
       // Handle encodable values
       else if let encodableValue = value as? Encodable {
-        map[label] = AnyEncodable(encodableValue)
-      } else if let guardValue = value as? CustomStringConvertible {
-        // Convert non-encodable values using CustomStringConvertible
-        map[label] = AnyEncodable(guardValue.description)
+        map[key] = AnyEncodable(encodableValue)
+      } else {
+        // Convert non-encodable values to string
+        map[key] = AnyEncodable(String(describing: value))
       }
     }
 
@@ -48,12 +54,7 @@ extension DTO {
 
   private func isNil(_ value: Any) -> Bool {
     let mirror = Mirror(reflecting: value)
-    if mirror.displayStyle == .optional {
-      if mirror.children.isEmpty {
-        return true
-      }
-    }
-    return false
+    return mirror.displayStyle == .optional && mirror.children.isEmpty
   }
 
   public func toData() -> Data? {

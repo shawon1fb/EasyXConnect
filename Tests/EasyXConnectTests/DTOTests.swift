@@ -57,8 +57,6 @@ class DTOTests: XCTestCase {
         let dto = TestDTO(name: "John Doe", age: 1, isActive: true)
         let queryParams = dto.toQueryParams()
         
-        print("-------------TestToQueryParams--------------------------")
-        print(dto.toString())
         XCTAssertNotNil(queryParams)
         XCTAssertEqual(queryParams?["name"], "John Doe")
         XCTAssertEqual(queryParams?["age"], "1")
@@ -98,4 +96,6 @@ class DTOTests: XCTestCase {
         XCTAssertEqual(jsonMap?["name"]?.value as? String, "John")
         XCTAssertNotNil(jsonMap?["nonEncodable"]) // Should be encoded as a string description
     }
+    
+    
 }
