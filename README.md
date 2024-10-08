@@ -270,4 +270,11 @@ Happy coding with EasyXConnect! If you have any questions or need further assist
                 Cool Cow
 ```
 ---
-        
+  
+## Support
+
+If you find **EasyXConnect** helpful and would like to support its ongoing development, please consider buying me a coffee!
+
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-blue.png)](https://www.buymeacoffee.com/shawon1fb)
+
+Your support is greatly appreciated and helps in maintaining and improving the project.
