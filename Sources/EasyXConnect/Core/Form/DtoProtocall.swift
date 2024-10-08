@@ -14,43 +14,35 @@ public protocol DTO: Encodable {
 }
 
 extension DTO {
-  public func toJsonMap() -> [String: AnyEncodable]? {
-    let mirror = Mirror(reflecting: self)
-    var map = [String: AnyEncodable]()
+    public func toJsonMap() -> [String: AnyEncodable]? {
+            let mirror = Mirror(reflecting: self)
+            var map = [String: AnyEncodable]()
 
-    let codingKeys = CodingKeysFinder.collectCodingKeysValue(from: self)
+            let codingKeys = CodingKeysFinder.collectCodingKeysValue(from: self)
 
-    for case let (label?, value) in mirror.children {
-      // Check if the value is Optional
+            for case let (label?, value) in mirror.children {
+                let mirrorValue = Mirror(reflecting: value)
+                if mirrorValue.displayStyle == .optional && mirrorValue.children.isEmpty {
+                    continue // Skip nil optionals
+                }
 
-      let mirrorValue = Mirror(reflecting: value)
-      if mirrorValue.displayStyle == .optional {
-        if mirrorValue.children.isEmpty {
-          // Skip nil optionals
-          continue
+                let key = codingKeys[label] ?? label
+
+                // Handle special types
+                if let urlValue = value as? URL {
+                    map[key] = AnyEncodable(urlValue.absoluteString)
+                } else if let enumValue = value as? (any RawRepresentable), let rawValue = enumValue.rawValue as? Encodable {
+                    map[key] = AnyEncodable(rawValue)
+                } else if let encodableValue = value as? Encodable {
+                    map[key] = AnyEncodable(encodableValue)
+                } else {
+                    map[key] = AnyEncodable(String(describing: value))
+                }
+            }
+
+            return map.isEmpty ? nil : map
         }
-      }
 
-      // Determine the key to use (either from CodingKeys or the property name)
-      let key = codingKeys[label] ?? label
-
-      if let fieldWrapper = value as? AnyFieldName {
-        let wrappedValue = fieldWrapper.getWrappedValue()
-        if !isNil(wrappedValue) {
-          map[fieldWrapper.getKey()] = AnyEncodable(wrappedValue)
-        }
-      }
-      // Handle encodable values
-      else if let encodableValue = value as? Encodable {
-        map[key] = AnyEncodable(encodableValue)
-      } else {
-        // Convert non-encodable values to string
-        map[key] = AnyEncodable(String(describing: value))
-      }
-    }
-
-    return map.isEmpty ? nil : map
-  }
 
   private func isNil(_ value: Any) -> Bool {
     let mirror = Mirror(reflecting: value)
