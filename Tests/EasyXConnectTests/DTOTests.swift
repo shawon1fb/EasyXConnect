@@ -384,4 +384,114 @@ class DTOTests: XCTestCase {
         XCTAssertEqual(queryParams?["scores"], "[1, 2, 3]")
         XCTAssertEqual(queryParams?["tags"], "[\"a\", \"b\"]")
     }
+    
+    func testNestedDTO2() {
+        // Test Case 1: Valid Data
+        let mediaContent = MediaContentResponse(
+            url: "https://example.com/media",
+            mimeType: "image/jpeg",
+            altText: "Sample image",
+            thumbnail: "https://example.com/thumbnail",
+            autoplay: true,
+            autoRepeat: false,
+            duration: 10.5,
+            contentPlatform: "web"
+        )
+        
+        let dto = SubmitReviewRequestBody(
+            productId: "12345",
+            rating: "5",
+            description: "Great product!",
+            contents: [mediaContent]
+        )
+        
+        let jsonMap = dto.toJsonMap()
+        
+        print(jsonMap ?? [:])
+        print(dto.toString())
+       
+        XCTAssertNotNil(jsonMap)
+        XCTAssertEqual(jsonMap?["productId"]?.value as? String, "12345")
+        XCTAssertEqual(jsonMap?["rating"]?.value as? String, "5")
+        XCTAssertEqual(jsonMap?["description"]?.value as? String, "Great product!")
+        XCTAssertNotNil(jsonMap?["contents"])
+        
+        // Test Case 2: Missing Description
+        let dtoMissingDescription = SubmitReviewRequestBody(
+            productId: "12345",
+            rating: "4",
+            description: nil,
+            contents: [mediaContent]
+        )
+        
+        let jsonMapMissingDescription = dtoMissingDescription.toJsonMap()
+        
+        XCTAssertNotNil(jsonMapMissingDescription)
+        XCTAssertNil(jsonMapMissingDescription?["description"])
+        
+        // Test Case 3: Empty Content
+        let dtoEmptyContent = SubmitReviewRequestBody(
+            productId: "12345",
+            rating: "5",
+            description: "Great product!",
+            contents: []
+        )
+        
+        let jsonMapEmptyContent = dtoEmptyContent.toJsonMap()
+        
+        XCTAssertNotNil(jsonMapEmptyContent)
+        XCTAssertEqual(jsonMapEmptyContent?["contents"]?.value as? [MediaContentResponse] , [])
+        
+        // Test Case 4: Invalid Rating
+        let dtoInvalidRating = SubmitReviewRequestBody(
+            productId: "12345",
+            rating: "-1",  // Assuming the rating should be within a specific range
+            description: "Invalid rating test",
+            contents: [mediaContent]
+        )
+        
+        let jsonMapInvalidRating = dtoInvalidRating.toJsonMap()
+        
+        XCTAssertNotNil(jsonMapInvalidRating)
+        XCTAssertEqual(jsonMapInvalidRating?["rating"]?.value as? String, "-1")
+        
+        // Test Case 5: Null ProductId
+        let dtoNullProductId = SubmitReviewRequestBody(
+            productId: nil,
+            rating: "5",
+            description: "Null product ID test",
+            contents: [mediaContent]
+        )
+        
+        let jsonMapNullProductId = dtoNullProductId.toJsonMap()
+        
+        XCTAssertNotNil(jsonMapNullProductId)
+        XCTAssertNil(jsonMapNullProductId?["productId"])
+        
+        // Test Case 6: Multiple Media Contents
+        let mediaContent2 = MediaContentResponse(
+            url: "https://example.com/media2",
+            mimeType: "video/mp4",
+            altText: "Sample video",
+            thumbnail: "https://example.com/thumbnail2",
+            autoplay: false,
+            autoRepeat: true,
+            duration: 30.0,
+            contentPlatform: "mobile"
+        )
+        
+        let dtoMultipleContents = SubmitReviewRequestBody(
+            productId: "67890",
+            rating: "4",
+            description: "Product with multiple media contents",
+            contents: [mediaContent, mediaContent2]
+        )
+        
+        let jsonMapMultipleContents = dtoMultipleContents.toJsonMap()
+        
+        XCTAssertNotNil(jsonMapMultipleContents)
+        XCTAssertEqual((jsonMapMultipleContents?["contents"]?.value as? [MediaContentResponse])?.count, 2)
+    }
+
+
 }
