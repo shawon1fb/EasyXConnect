@@ -29,14 +29,28 @@ public final class RequestBuilder {
     // Only add query items if query parameters exist
     if let query = query, !query.isEmpty {
       var queryItems: [URLQueryItem] = []
-      for item in query {
-        let v = URLQueryItem(name: item.key, value: item.value)
-        queryItems.append(v)
-      }
+        
+        if let existingQueryItems = urlComponents?.queryItems {
+          queryItems.append(contentsOf: existingQueryItems)
+        }
+        
+        // Then, add or update query items from the new query
+           for item in query {
+               let newItem = URLQueryItem(name: item.key, value: item.value)
+               
+               if let index = queryItems.firstIndex(where: { $0.name == item.key }) {
+                   // If the item already exists, replace it
+                   queryItems[index] = newItem
+               } else {
+                   // If it doesn't exist, append it
+                   queryItems.append(newItem)
+               }
+           }
+     
       urlComponents?.queryItems = queryItems
     } else {
       // Explicitly set queryItems to nil if there are no query parameters
-      urlComponents?.queryItems = nil
+      //      urlComponents?.queryItems = nil
     }
 
     guard let apiUrl = urlComponents?.url else {

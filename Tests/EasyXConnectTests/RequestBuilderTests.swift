@@ -28,6 +28,11 @@ final class RequestBuilderTests: XCTestCase {
       headers: headers,
       cachePolicy: cachePolicy
     )
+      if let u = request.url{
+          print("----------------------------")
+          print(u)
+          print("----------------------------")
+      }
 
     XCTAssertEqual(request.url?.absoluteString, "https://example.com/api/v1/resource?key=value")
     XCTAssertEqual(request.httpBody, body)
@@ -161,5 +166,66 @@ final class RequestBuilderTests: XCTestCase {
 
     XCTAssertEqual(request.cachePolicy, .returnCacheDataElseLoad)
   }
+    
+    func testBuildRequest_queryParams_check() throws {
+      let baseURL = URL(string: "https://example.com/path?page=1")!
+        let query = ["key": "value", "page": "2"]
+        print(baseURL)
+      let request = try RequestBuilder.buildRequest(
+        "", baseURL: baseURL, query: query, body: nil, headers: nil,
+        cachePolicy: .returnCacheDataElseLoad)
+        if let u = request.url{
+            print(u)
+        }
+       
+
+      XCTAssertEqual(request.cachePolicy, .returnCacheDataElseLoad)
+    }
+    
+    func testBuildRequest_noQueryParams() throws {
+        let baseURL = URL(string: "https://example.com/path")!
+        let query: [String: String]? = nil
+        let request = try RequestBuilder.buildRequest(
+            "", baseURL: baseURL, query: query, body: nil, headers: nil,
+            cachePolicy: .reloadIgnoringLocalCacheData)
+        
+        XCTAssertEqual(request.url?.absoluteString, "https://example.com/path")
+        XCTAssertEqual(request.cachePolicy, .reloadIgnoringLocalCacheData)
+    }
+
+    func testBuildRequest_overrideQueryParams() throws {
+        let baseURL = URL(string: "https://example.com/path?page=1")!
+        let query = ["page": "2", "key": "value"]
+        let request = try RequestBuilder.buildRequest(
+            "", baseURL: baseURL, query: query, body: nil, headers: nil,
+            cachePolicy: .useProtocolCachePolicy)
+        
+        XCTAssertEqual(request.url?.absoluteString, "https://example.com/path?page=2&key=value")
+        XCTAssertEqual(request.cachePolicy, .useProtocolCachePolicy)
+    }
+
+    func testBuildRequest_noBaseQueryParams() throws {
+        let baseURL = URL(string: "https://example.com/path")!
+        let query = ["page": "1"]
+        let request = try RequestBuilder.buildRequest(
+            "", baseURL: baseURL, query: query, body: nil, headers: nil,
+            cachePolicy: .returnCacheDataElseLoad)
+        
+        XCTAssertEqual(request.url?.absoluteString, "https://example.com/path?page=1")
+        XCTAssertEqual(request.cachePolicy, .returnCacheDataElseLoad)
+    }
+
+    func testBuildRequest_withBody() throws {
+        let baseURL = URL(string: "https://example.com/path")!
+        let query = ["key": "value"]
+        let body = Data("test body".utf8)
+        let request = try RequestBuilder.buildRequest(
+            "", baseURL: baseURL, query: query, body: body, headers: nil,
+            cachePolicy: .useProtocolCachePolicy)
+        
+        XCTAssertEqual(request.url?.absoluteString, "https://example.com/path?key=value")
+        XCTAssertEqual(request.httpBody, body)
+        XCTAssertEqual(request.cachePolicy, .useProtocolCachePolicy)
+    }
 
 }
