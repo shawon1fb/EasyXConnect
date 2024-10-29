@@ -7,19 +7,23 @@
 
 import Foundation
 
-class ServerException: Error {
-    let message: String
-    let stackTrace: String?
-    
-    init(message: String = "500 server error", stackTrace: String? = nil) {
-        self.message = message
-        self.stackTrace = stackTrace
-        print(stackTrace ?? "")
-    }
-    
-    var localizedDescription: String {
-        return message
-    }
+public class ServerException: Error {
+  public let message: String
+  public let stackTrace: String?
+
+  public init(message: String = "500 server error", stackTrace: String? = nil) {
+    self.message = message
+    self.stackTrace = stackTrace
+    print(stackTrace ?? "")
+  }
+
+  public var localizedDescription: String {
+    return message
+  }
 }
 
-
+extension ServerException: CustomStringConvertible {
+  public var description: String {
+    return message
+  }
+}
