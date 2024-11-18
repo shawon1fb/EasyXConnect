@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 @available(iOS 13.0, macOS 10.15.0, watchOS 6.0, tvOS 13.0, *)
-public class ExHttpConnect : IHttpConnect {
+public final class ExHttpConnect : IHttpConnect {
     
     
     public var intercepters: [Intercepter] = []
