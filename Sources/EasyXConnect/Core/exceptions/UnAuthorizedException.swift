@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class UnAuthorizedException: Error {
+public struct UnAuthorizedException: Error {
   public let message: String
   public let stackTrace: String?
 

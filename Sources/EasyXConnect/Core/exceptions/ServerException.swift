@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class ServerException: Error {
+public struct ServerException: Error {
   public let message: String
   public let stackTrace: String?
 

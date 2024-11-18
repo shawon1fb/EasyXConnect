@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct AppResponse<T> {
+public struct AppResponse<T: Sendable> : Sendable {
     public    let statusCode: Int
     public let payload: T?
     

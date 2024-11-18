@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class NotFoundException: Error {
+public struct NotFoundException: Error {
   public let message: String
   public let stackTrace: String?
 

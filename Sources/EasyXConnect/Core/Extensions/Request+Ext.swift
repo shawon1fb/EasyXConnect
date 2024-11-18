@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension URLRequest {
+public extension URLRequest {
   var cURL: String {
     guard let url = url else { return "" }
     var components = ["curl"]
