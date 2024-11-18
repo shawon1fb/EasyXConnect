@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class ForbiddenException: Error {
+public struct ForbiddenException: Error {
   public let message: String
   public let stackTrace: String?
 
