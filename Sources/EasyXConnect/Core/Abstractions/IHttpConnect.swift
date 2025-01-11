@@ -91,8 +91,8 @@ protocol IHttpConnect {
 
 public protocol Intercepter{
     
-    func onRequest(req: URLRequest)->(URLRequest, Data?)
+    func onRequest(req: URLRequest)async throws ->(URLRequest, Data?)
     
-    func onResponse(req: URLRequest , res: URLResponse?, data:Data) -> Data
+    func onResponse(req: URLRequest , res: URLResponse?, data:Data) async throws -> Data
     
 }

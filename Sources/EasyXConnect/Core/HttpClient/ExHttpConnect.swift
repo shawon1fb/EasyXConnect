@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 @available(iOS 13.0, macOS 10.15.0, watchOS 6.0, tvOS 13.0, *)
-public class ExHttpConnect : IHttpConnect {
+open class ExHttpConnect : IHttpConnect {
     
     
     public var intercepters: [Intercepter] = []
@@ -179,7 +179,7 @@ public class ExHttpConnect : IHttpConnect {
             var reqData: Data?
             //MARK: intercepters on request
             for intersepter in intercepters{
-                ( req , reqData) = intersepter.onRequest(req: req)
+                ( req , reqData) = try await intersepter.onRequest(req: req)
             }
             
             // cache true return response
@@ -199,7 +199,7 @@ public class ExHttpConnect : IHttpConnect {
             //MARK: intercepters on response
             for intersepter in intercepters{
                 
-                resData = intersepter.onResponse(req: url, res: res, data: data)
+                resData = try await intersepter.onResponse(req: url, res: res, data: data)
             }
             return try DataToObjectConverter.dataToObject(data: resData, statusCode: response?.statusCode ?? 299)
         }catch let error as DecodingError {
