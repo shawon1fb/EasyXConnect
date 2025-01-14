@@ -9,21 +9,21 @@ import Foundation
 import Combine
 
 @available(iOS 13.0, macOS 10.15.0, watchOS 6.0, tvOS 13.0, *)
-open class ExHttpConnect : IHttpConnect {
+final class ExHttpConnect : IHttpConnect {
     
-    
-    public var intercepters: [Intercepter] = []
+    public let intercepters: [Intercepter]
     
     let baseURL: URL
     let session: URLSession
     
-    public init(baseURL: URL, session:URLSession? = nil) {
+    public init(baseURL: URL, session:URLSession? = nil, intercepters: [Intercepter] = []) {
         self.baseURL = baseURL
         if let session = session{
             self.session =  session
         }else{
             self.session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue())
         }
+        self.intercepters = intercepters
     }
     
     

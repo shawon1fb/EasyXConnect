@@ -13,9 +13,9 @@ public enum HTTPError: Error {
     case invalidURL
 }
 
-protocol IHttpConnect {
+protocol IHttpConnect: Sendable {
     
-    var intercepters:[ Intercepter ] { get set }
+//    var intercepters:[ Intercepter ] { get set }
     
     func get<T: Codable>(
         _ url: String,
@@ -89,7 +89,7 @@ protocol IHttpConnect {
     ) async throws ->  AppResponse<T>
 }
 
-public protocol Intercepter{
+public protocol Intercepter: Sendable{
     
     func onRequest(req: URLRequest)async throws ->(URLRequest, Data?)
     
