@@ -15,8 +15,9 @@ public final class ExHttpConnect : IHttpConnect {
     
     let baseURL: URL
     let session: URLSession
+    let debug:Bool
     
-    public init(baseURL: URL, session:URLSession? = nil, intercepters: [Intercepter] = []) {
+    public init(baseURL: URL, session:URLSession? = nil, intercepters: [Intercepter] = [], debug:Bool = true) {
         self.baseURL = baseURL
         if let session = session{
             self.session =  session
@@ -24,6 +25,7 @@ public final class ExHttpConnect : IHttpConnect {
             self.session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue())
         }
         self.intercepters = intercepters
+        self.debug = debug
     }
     
     
@@ -202,22 +204,12 @@ public final class ExHttpConnect : IHttpConnect {
                 resData = try await intersepter.onResponse(req: url, res: res, data: data)
             }
             return try DataToObjectConverter.dataToObject(data: resData, statusCode: response?.statusCode ?? 299)
-        }catch let error as DecodingError {
-            switch error {
-            case .dataCorrupted(let context):
-                debugPrint("Data corrupted: \(context.debugDescription)")
-            case .keyNotFound(let key, let context):
-                debugPrint("Key '\(key)' not found: \(context.debugDescription)")
-            case .typeMismatch(let type, let context):
-                debugPrint("Type mismatch for type '\(type)'", context.debugDescription)
-            case .valueNotFound(let type, let context):
-                debugPrint("Value not found for type '\(type)'", context.debugDescription)
-            @unknown default:
-                debugPrint("Unknown decoding error \(error.errorDescription ?? "" )")
-            }
-            throw error
         } catch {
-            debugPrint("Error during decoding: \(error.localizedDescription)")
+            if debug {
+                let errorString = PrettyErrorPrinter.prettyError(error)
+                print(errorString)
+                
+            }
             throw error
         }
     }
