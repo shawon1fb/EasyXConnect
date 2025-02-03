@@ -93,6 +93,6 @@ public protocol Intercepter: Sendable{
     
     func onRequest(req: URLRequest)async throws ->(URLRequest, Data?)
     
-    func onResponse(req: URLRequest , res: URLResponse?, data:Data) async throws -> (Data, URLResponse)
+    func onResponse(req: URLRequest , res: URLResponse?, data:Data) async throws -> (Data, URLResponse?)
     
 }
