@@ -215,7 +215,7 @@ public final class ExHttpConnect : IHttpConnect {
     }
     
     // This function to make the network request compatible with iOS versions prior to 15.0
-    func performRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
+   public func performRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
         if #available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *){
             return try await session.data(for: request)
         }else{
