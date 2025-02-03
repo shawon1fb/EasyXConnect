@@ -201,7 +201,13 @@ public final class ExHttpConnect : IHttpConnect {
             //MARK: intercepters on response
             for intersepter in intercepters{
                 
-              let  (data,  urlResponse ) = try await intersepter.onResponse(req: request, res: res, data: data)
+                let  (data,  urlResponse ) = try await intersepter.onResponse(
+                    req: request,
+                    res: res,
+                    data: data,
+                    modifiedData: resData,
+                    customResponse: response
+                )
                 resData = data
                 response = urlResponse as? HTTPURLResponse
             }
