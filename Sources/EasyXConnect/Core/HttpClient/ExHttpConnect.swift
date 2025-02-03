@@ -38,7 +38,7 @@ public final class ExHttpConnect : IHttpConnect {
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try requestBuilder(url, query: query, body: nil, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "GET"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     public func post< T: Codable>(
@@ -51,7 +51,7 @@ public final class ExHttpConnect : IHttpConnect {
         
         var request = try requestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "POST"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     //Multipart request [post]
@@ -64,7 +64,7 @@ public final class ExHttpConnect : IHttpConnect {
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try multiPartRequestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "POST"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     public func put< T: Codable>(
@@ -76,7 +76,7 @@ public final class ExHttpConnect : IHttpConnect {
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try requestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PUT"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     //Multipart request [put]
@@ -89,7 +89,7 @@ public final class ExHttpConnect : IHttpConnect {
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try multiPartRequestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PUT"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     public func patch< T: Codable>(
@@ -101,7 +101,7 @@ public final class ExHttpConnect : IHttpConnect {
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try requestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PATCH"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     //Maltipart request [patch]
@@ -114,7 +114,7 @@ public final class ExHttpConnect : IHttpConnect {
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try multiPartRequestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "PATCH"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     public func delete< T: Codable>(
@@ -126,13 +126,13 @@ public final class ExHttpConnect : IHttpConnect {
     ) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try requestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "DELETE"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     func delete<T>(_ url: String, body: MultipartDTO? = nil, headers: [String : String]?, query: [String : String]?, cachePolicy: URLRequest.CachePolicy?) async throws -> AppResponse<T> where T : Decodable, T : Encodable {
         var request = try multiPartRequestBuilder(url, query: query, body: body, headers: headers,cachePolicy: cachePolicy)
         request.httpMethod = "DELETE"
-        return try await sendRequest(url: request)
+        return try await sendRequest(request: request)
     }
     
     
@@ -172,11 +172,11 @@ public final class ExHttpConnect : IHttpConnect {
     }
     
     
-    public func sendRequest<R: Codable>(url: URLRequest  )async throws -> AppResponse<R> {
+    public func sendRequest<R: Codable>(request: URLRequest  )async throws -> AppResponse<R> {
         
         do{
             
-            var req = url
+            var req = request
             
             var reqData: Data?
             //MARK: intercepters on request
@@ -194,15 +194,19 @@ public final class ExHttpConnect : IHttpConnect {
             
             let (data, res) = try await performRequest(req)
             
-            let response = res as? HTTPURLResponse
-            
+           
+            var response = res as? HTTPURLResponse
             var resData:Data = data
             
             //MARK: intercepters on response
             for intersepter in intercepters{
                 
-                resData = try await intersepter.onResponse(req: url, res: res, data: data)
+              let  (data,  urlResponse ) = try await intersepter.onResponse(req: request, res: res, data: data)
+                resData = data
+                response = urlResponse as? HTTPURLResponse
             }
+            
+            
             return try DataToObjectConverter.dataToObject(data: resData, statusCode: response?.statusCode ?? 299)
         } catch {
             if debug {
