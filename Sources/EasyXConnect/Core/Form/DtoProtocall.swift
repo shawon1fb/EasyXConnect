@@ -14,35 +14,36 @@ public protocol DTO: Encodable {
 }
 
 extension DTO {
-    public func toJsonMap() -> [String: AnyEncodable]? {
-            let mirror = Mirror(reflecting: self)
-            var map = [String: AnyEncodable]()
+  public func toJsonMap() -> [String: AnyEncodable]? {
+    let mirror = Mirror(reflecting: self)
+    var map = [String: AnyEncodable]()
 
-            let codingKeys = CodingKeysFinder.collectCodingKeysValue(from: self)
+    let codingKeys = CodingKeysFinder.collectCodingKeysValue(from: self)
 
-            for case let (label?, value) in mirror.children {
-                let mirrorValue = Mirror(reflecting: value)
-                if mirrorValue.displayStyle == .optional && mirrorValue.children.isEmpty {
-                    continue // Skip nil optionals
-                }
+    for case let (label?, value) in mirror.children {
+      let mirrorValue = Mirror(reflecting: value)
+      if mirrorValue.displayStyle == .optional && mirrorValue.children.isEmpty {
+        continue  // Skip nil optionals
+      }
 
-                let key = codingKeys[label] ?? label
+      let key = codingKeys[label] ?? label
 
-                // Handle special types
-                if let urlValue = value as? URL {
-                    map[key] = AnyEncodable(urlValue.absoluteString)
-                } else if let enumValue = value as? (any RawRepresentable), let rawValue = enumValue.rawValue as? Encodable {
-                    map[key] = AnyEncodable(rawValue)
-                } else if let encodableValue = value as? Encodable {
-                    map[key] = AnyEncodable(encodableValue)
-                } else {
-                    map[key] = AnyEncodable(String(describing: value))
-                }
-            }
+      // Handle special types
+      if let urlValue = value as? URL {
+        map[key] = AnyEncodable(urlValue.absoluteString)
+      } else if let enumValue = value as? (any RawRepresentable),
+        let rawValue = enumValue.rawValue as? Encodable
+      {
+        map[key] = AnyEncodable(rawValue)
+      } else if let encodableValue = value as? Encodable {
+        map[key] = AnyEncodable(encodableValue)
+      } else {
+        map[key] = AnyEncodable(String(describing: value))
+      }
+    }
 
-            return map.isEmpty ? nil : map
-        }
-
+    return map.isEmpty ? nil : map
+  }
 
   private func isNil(_ value: Any) -> Bool {
     let mirror = Mirror(reflecting: value)
@@ -96,4 +97,15 @@ extension DTO {
     return nil
   }
 
+  public func toDataWithNotNull() -> Data {
+    let map: [String: AnyEncodable] = toJsonMap() ?? [:]
+    do {
+      let encoder = JSONEncoder()
+      let data = try encoder.encode(map)
+      return data
+    } catch {
+      debugPrint("Encoding error: \(error)")
+      return "{}".data(using: .utf8) ?? Data()
+    }
+  }
 }
