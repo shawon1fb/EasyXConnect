@@ -1,9 +1,3 @@
-//
-//  PrettyErrorPrinter.swift
-//  EasyXConnect
-//
-//  Created by Shahanul Haque on 1/20/25.
-//
 import Foundation
 
 public class PrettyErrorPrinter {
@@ -35,7 +29,7 @@ public class PrettyErrorPrinter {
         
         return details
     }
-
+    
     public static func formatDecodingError(_ error: DecodingError) -> String {
         switch error {
         case .keyNotFound(let key, let context):
@@ -127,10 +121,34 @@ public class PrettyErrorPrinter {
         // Add specific solutions based on error codes and descriptions
         if errorCode == 3840 { // JSON parsing error
             if debugDescription.contains("not representable in Swift") {
-                components.append("💡 Solution: A numeric value in your JSON can't be represented in Swift. This happens when:")
-                components.append("  - A floating-point number (like 451.5) is being decoded to an integer type")
-                components.append("  - A number exceeds the range of its target Swift type")
-                components.append("  - Check your model's property types and ensure they match the JSON data types")
+                // Try to extract the problematic number from the error message
+                var problematicValue = "unknown"
+                if let regex = try? NSRegularExpression(pattern: "Number ([0-9.]+) is not", options: []),
+                   let match = regex.firstMatch(in: debugDescription, options: [], range: NSRange(debugDescription.startIndex..., in: debugDescription)),
+                   let numberRange = Range(match.range(at: 1), in: debugDescription) {
+                    problematicValue = String(debugDescription[numberRange])
+                }
+                
+                components.append("💡 Problem: A numeric value (\(problematicValue)) in your JSON can't be represented in Swift.")
+                
+                // If we know which field has the error (useful for your example)
+                if let jsonData = userInfo["NSInvalidValue"] as? Data,
+                   let json = try? JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any] {
+                    
+                    // Find keys with problematic values
+                    let problematicKeys = json.filter { key, value in
+                        "\(value)" == problematicValue
+                    }.keys
+                    
+                    if !problematicKeys.isEmpty {
+                        components.append("📍 Problematic JSON key(s): \(problematicKeys.joined(separator: ", "))")
+                    }
+                }
+                
+                components.append("💡 Solution:")
+                components.append("  - Check if you're decoding a floating-point number (like \(problematicValue)) to an integer type")
+                components.append("  - Ensure the number doesn't exceed the range of its target Swift type")
+                components.append("  - Verify your model's property types match the JSON data types")
             } else {
                 components.append("💡 Solution: The JSON data is malformed. Check the syntax and format.")
             }
@@ -139,6 +157,105 @@ public class PrettyErrorPrinter {
         }
         
         return components.joined(separator: "\n")
+    }
+    
+    // Method to analyze a JSON string to find problematic values
+    public static func analyzeJSON(_ jsonString: String, problematicValue: String) -> [String] {
+        guard let data = jsonString.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return []
+        }
+        
+        return findProblematicKeys(in: json, value: problematicValue)
+    }
+    
+    // Recursively search for keys with a specific value
+    private static func findProblematicKeys(in json: [String: Any], value: String, path: String = "") -> [String] {
+        var result = [String]()
+        
+        for (key, val) in json {
+            let currentPath = path.isEmpty ? key : "\(path).\(key)"
+            
+            // Convert the value to string and compare with our target
+            let valueString = "\(val)"
+            if valueString == value {
+                result.append(currentPath)
+            }
+            
+            // Recursively search in nested dictionaries
+            if let nestedDict = val as? [String: Any] {
+                result.append(contentsOf: findProblematicKeys(in: nestedDict, value: value, path: currentPath))
+            }
+            
+            // Search in arrays
+            if let array = val as? [Any] {
+                for (index, item) in array.enumerated() {
+                    let itemString = "\(item)"
+                    if itemString == value {
+                        result.append("\(currentPath)[\(index)]")
+                    }
+                    
+                    if let nestedDict = item as? [String: Any] {
+                        result.append(contentsOf: findProblematicKeys(in: nestedDict, value: value, path: "\(currentPath)[\(index)]"))
+                    }
+                }
+            }
+        }
+        
+        return result
+    }
+    
+    // Helper function to find keys with numeric values that approximately match a target
+    private static func findApproximateNumericKeys(in json: [String: Any], value: Double, path: String = "", epsilon: Double = 0.0001) -> [String] {
+        var result = [String]()
+        
+        // Function to check if a value approximately matches our target
+        func isApproximateMatch(_ testValue: Any) -> Bool {
+            if let numValue = testValue as? NSNumber {
+                let doubleVal = numValue.doubleValue
+                // Check if they're very close (floating point comparison)
+                return abs(doubleVal - value) < epsilon
+            } else if let stringValue = testValue as? String, let doubleVal = Double(stringValue) {
+                // Try to parse string as double
+                return abs(doubleVal - value) < epsilon
+            }
+            // Convert to string and try matching that way
+            let valueString = "\(testValue)"
+            if let doubleVal = Double(valueString) {
+                return abs(doubleVal - value) < epsilon
+            }
+            // Direct string comparison as fallback
+            return valueString == "\(value)"
+        }
+        
+        for (key, val) in json {
+            let currentPath = path.isEmpty ? key : "\(path).\(key)"
+            
+            // Check for approximate match
+            if isApproximateMatch(val) {
+                result.append(currentPath)
+            }
+            
+            // Recursively search in nested dictionaries
+            if let nestedDict = val as? [String: Any] {
+                result.append(contentsOf: findApproximateNumericKeys(in: nestedDict, value: value, path: currentPath, epsilon: epsilon))
+            }
+            
+            // Search in arrays
+            if let array = val as? [Any] {
+                for (index, item) in array.enumerated() {
+                    if isApproximateMatch(item) {
+                        result.append("\(currentPath)[\(index)]")
+                    }
+                    
+                    if let nestedDict = item as? [String: Any] {
+                        result.append(contentsOf: findApproximateNumericKeys(in: nestedDict, value: value, path: "\(currentPath)[\(index)]", epsilon: epsilon))
+                    }
+                }
+            }
+        }
+        
+        return result
     }
     
     // Returns formatted error message without logging
@@ -161,5 +278,85 @@ public class PrettyErrorPrinter {
         defaultLogHandler(prettyError(error))
     }
     
-    public init() {}
+    // Improved method to extract and analyze a JSON problem in one step
+    public static func analyzeJSONError(_ error: Error, jsonString: String) -> (String, [String]) {
+        let formattedError = prettyError(error)
+        var problematicKeys: [String] = []
+        
+        // Try to extract problematic value from error
+        var problematicValue: String? = nil
+        
+        // Extract information from different error types
+        if let decodingError = error as? DecodingError {
+            switch decodingError {
+            case .typeMismatch(_, let context),
+                    .dataCorrupted(let context):
+                // For type mismatch and data corrupted, check for underlying error
+                if let underlyingError = context.underlyingError as NSError?,
+                   let debugDescription = underlyingError.userInfo["NSDebugDescription"] as? String {
+                    // Try to extract a number from the debug description
+                    if debugDescription.contains("not representable in Swift") {
+                        if let regex = try? NSRegularExpression(pattern: "Number ([0-9.]+) is not", options: []),
+                           let match = regex.firstMatch(in: debugDescription, options: [], range: NSRange(debugDescription.startIndex..., in: debugDescription)),
+                           let numberRange = Range(match.range(at: 1), in: debugDescription) {
+                            problematicValue = String(debugDescription[numberRange])
+                        }
+                    }
+                }
+                
+            case .keyNotFound(let key, _):
+                // For key not found, we add the missing key to problematic keys
+                problematicKeys.append(key.stringValue)
+                
+            case .valueNotFound(_, let context):
+                // For value not found, we can at least report the path
+                problematicKeys.append(formatCodingPath(context.codingPath))
+                
+            default:
+                break
+            }
+        } else {
+            // For other errors, check if it's a NSCocoaErrorDomain error
+            let nsError = error as NSError
+            if nsError.domain == NSCocoaErrorDomain {
+                let debugDescription = nsError.userInfo["NSDebugDescription"] as? String ?? ""
+                
+                if debugDescription.contains("not representable in Swift") {
+                    if let regex = try? NSRegularExpression(pattern: "Number ([0-9.]+) is not", options: []),
+                       let match = regex.firstMatch(in: debugDescription, options: [], range: NSRange(debugDescription.startIndex..., in: debugDescription)),
+                       let numberRange = Range(match.range(at: 1), in: debugDescription) {
+                        problematicValue = String(debugDescription[numberRange])
+                    }
+                }
+            }
+        }
+        
+        // If we found a problematic value, analyze the JSON
+        if let value = problematicValue {
+            let keys = analyzeJSON(jsonString, problematicValue: value)
+            problematicKeys.append(contentsOf: keys)
+            
+            // If no keys found and value is numeric, try with approximate matching
+            if problematicKeys.isEmpty, let _ = Double(value) {
+                // Try to parse the JSON and apply approximate numeric matching
+                do {
+                    guard let data = jsonString.data(using: .utf8),
+                          let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                        return (formattedError, problematicKeys)
+                    }
+                    
+                    
+                } catch {
+                    // JSON is not parseable, can't find keys
+                }
+            }
+        }
+        
+        return (formattedError, problematicKeys)
+    }
+    
+   
+    public init () {
+        
+    }
 }
