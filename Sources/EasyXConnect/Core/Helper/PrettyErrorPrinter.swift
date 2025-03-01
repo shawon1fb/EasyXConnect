@@ -341,7 +341,7 @@ public class PrettyErrorPrinter {
                 // Try to parse the JSON and apply approximate numeric matching
                 do {
                     guard let data = jsonString.data(using: .utf8),
-                          let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                          let _ = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                         return (formattedError, problematicKeys)
                     }
                     
