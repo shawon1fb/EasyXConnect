@@ -360,3 +360,78 @@ public class PrettyErrorPrinter {
         
     }
 }
+
+extension PrettyErrorPrinter{
+    public static func prettyErrorFromJsonString(_ error: Error, jsonString: String) -> String {
+        let (errorStr, keys) = analyzeJSONError(error, jsonString: jsonString)
+        
+        // If we found problematic keys, add them to the error message
+        if !keys.isEmpty {
+            var resultStr = errorStr
+            
+            // Add a section for problematic keys
+            resultStr += "\n\n📍 Problematic JSON paths:"
+            for key in keys {
+                resultStr += "\n  - \(key)"
+            }
+            
+//             Add a JSON structure preview
+            if let data = jsonString.data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                resultStr += "\n\n📋 JSON Structure Preview:"
+                let previewStr = captureJSONPreview(json)
+                resultStr += "\n\(previewStr)"
+            }
+            
+            return resultStr
+        }
+        
+        return errorStr
+    }
+
+    // Helper method to generate a string representation of JSON structure
+    private static func captureJSONPreview(_ json: Any, indent: String = "", maxDepth: Int = 2, currentDepth: Int = 0) -> String {
+        var result = ""
+        
+        if currentDepth > maxDepth {
+            return "\(indent)..."
+        }
+        
+        if let dict = json as? [String: Any] {
+            result += "\(indent){\n"
+            let keys = dict.keys.sorted()
+            for key in keys {
+                let value = dict[key]!
+                if let _ = value as? [String: Any], currentDepth < maxDepth {
+                    result += "\(indent)  \(key): "
+                    result += captureJSONPreview(value, indent: indent + "  ", maxDepth: maxDepth, currentDepth: currentDepth + 1)
+                } else if let arrayValue = value as? [Any] {
+                    result += "\(indent)  \(key): [Array with \(arrayValue.count) items]\n"
+                } else {
+                    let valueStr = String(describing: value).prefix(50)
+                    result += "\(indent)  \(key): \(valueStr)\(valueStr.count >= 50 ? "..." : "")\n"
+                }
+            }
+            result += "\(indent)}\n"
+        } else if let array = json as? [Any] {
+            result += "\(indent)[\n"
+            if !array.isEmpty {
+                if array.count <= 3 {
+                    for item in array {
+                        result += captureJSONPreview(item, indent: indent + "  ", maxDepth: maxDepth, currentDepth: currentDepth + 1)
+                    }
+                } else {
+                    result += captureJSONPreview(array[0], indent: indent + "  ", maxDepth: maxDepth, currentDepth: currentDepth + 1)
+                    result += "\(indent)  ... (\(array.count - 2) more items) ...\n"
+                    result += captureJSONPreview(array.last!, indent: indent + "  ", maxDepth: maxDepth, currentDepth: currentDepth + 1)
+                }
+            }
+            result += "\(indent)]\n"
+        } else {
+            let valueStr = String(describing: json).prefix(50)
+            result += "\(indent)\(valueStr)\(valueStr.count >= 50 ? "..." : "")\n"
+        }
+        
+        return result
+    }
+}

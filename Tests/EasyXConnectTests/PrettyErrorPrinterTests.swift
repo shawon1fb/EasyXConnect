@@ -22,7 +22,7 @@ let floatToIntJSON = """
       }
     ],
     
-    "netShippingFee2": 442.5,
+    "netShippingFee2": 441.5,
     "netShippingFee": 441.5,
     "totalAmount": 1000,
     "currency": "USD"
@@ -115,7 +115,9 @@ final class PrettyErrorPrinterTests: XCTestCase {
        let keys  = PrettyErrorPrinter.analyzeJSON(floatToIntJSON, problematicValue: "441.5")
         print(" keys -> ")
         print(keys)
-      
+        let reports  = PrettyErrorPrinter.prettyErrorFromJsonString(error, jsonString: floatToIntJSON)
+        print("--------reports----------")
+        print(reports)
         //PrettyErrorPrinter.debugJSONAnalysis(jsonString: floatToIntJSON, valueToFind: "441.5")
         // Assert
         XCTAssertTrue(prettyError.contains("not representable in Swift"), "Error message should mention representation issue")
